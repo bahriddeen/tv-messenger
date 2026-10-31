@@ -25,4 +25,6 @@ public class RulesTest {
         assertEquals(10_000, Rules.nextBackoffMillis(5_000));
         assertEquals(60_000, Rules.nextBackoffMillis(40_000));
     }
+    @Test public void firstPollAnswersAtOnce() { assertEquals(0, Rules.pollTimeoutSec(false)); }
+    @Test public void laterPollsWait() { assertEquals(50, Rules.pollTimeoutSec(true)); }
 }

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TV Messenger</string>
+    <string name="notification_text">Listening for messages</string>
+    <string name="status_connected">✓ Connected, listening for messages</string>
+    <string name="status_not_connected">Not connected. Check the internet connection.</string>
+    <string name="last_none">No messages yet</string>
+    <string name="last_at">Last message: %1$s</string>
+    <string name="how_to">Messages sent to the Telegram bot appear on this TV. Nothing to set up here.</string>
+    <string name="reply_shown">✓ Shown on TV</string>
+    <string name="reply_played">✓ Played on TV</string>
+    <string name="reply_stale">Not shown: the TV was off when this arrived</string>
+    <string name="reply_unsupported">Only text and voice messages work</string>
+    <string name="reply_help">Send a text or a voice message and it appears on the TV.</string>
+    <string name="voice_notice">🎤 Voice message (%1$ds)</string>
+</resources>

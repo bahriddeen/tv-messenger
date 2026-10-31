@@ -10,6 +10,7 @@ final class Rules {
     static final long STALE_MILLIS = 120_000;
     static final long FIRST_BACKOFF_MILLIS = 5_000;
     static final long MAX_BACKOFF_MILLIS = 60_000;
+    static final int POLL_TIMEOUT_SEC = 50;
 
     private Rules() {}
 
@@ -35,5 +36,13 @@ final class Rules {
     static long nextBackoffMillis(long currentMillis) {
         if (currentMillis <= 0) return FIRST_BACKOFF_MILLIS;
         return Math.min(MAX_BACKOFF_MILLIS, currentMillis * 2);
+    }
+
+    /**
+     * Until Telegram has answered once since starting (or since a failure), ask it to answer at once, so the
+     * status screen shows Connected straight away instead of after a full long poll.
+     */
+    static int pollTimeoutSec(boolean answeredSinceStart) {
+        return answeredSinceStart ? POLL_TIMEOUT_SEC : 0;
     }
 }
