@@ -169,9 +169,10 @@ public final class MessengerService extends Service {
         Chime.play();
         CountDownLatch hidden = new CountDownLatch(1);
         long millis = Rules.displayMillis(in.text);
-        main.post(() -> Overlay.show(this, Rules.shorten(in.text), millis, hidden::countDown));
-        api.sendMessage(in.chatId, getString(R.string.reply_shown), in.messageId);
-        prefs.edit().putLong(KEY_LAST, System.currentTimeMillis()).apply();
+        if (onScreen(() -> Overlay.show(this, Rules.shorten(in.text), millis, hidden::countDown))) {
+            api.sendMessage(in.chatId, getString(R.string.reply_shown), in.messageId);
+            prefs.edit().putLong(KEY_LAST, System.currentTimeMillis()).apply();
+        }
         awaitQuietly(hidden, millis + 10_000);
     }
 
@@ -194,9 +195,10 @@ public final class MessengerService extends Service {
         long millis = Rules.photoMillis(in.text);
         String caption = in.text == null ? null : Rules.shorten(in.text);
         Bitmap shown = photo;
-        main.post(() -> Overlay.showPhoto(this, shown, caption, millis, hidden::countDown));
-        api.sendMessage(in.chatId, getString(R.string.reply_shown), in.messageId);
-        prefs.edit().putLong(KEY_LAST, System.currentTimeMillis()).apply();
+        if (onScreen(() -> Overlay.showPhoto(this, shown, caption, millis, hidden::countDown))) {
+            api.sendMessage(in.chatId, getString(R.string.reply_shown), in.messageId);
+            prefs.edit().putLong(KEY_LAST, System.currentTimeMillis()).apply();
+        }
         awaitQuietly(hidden, millis + 10_000);
         // The box is gone: give the photo's memory back now rather than whenever the collector runs.
         main.post(() -> {
@@ -245,6 +247,18 @@ public final class MessengerService extends Service {
             prefs.edit().putLong(KEY_LAST, System.currentTimeMillis()).apply();
         }
         awaitQuietly(hidden, 5_000);
+    }
+
+    /** Runs a show call on the main thread and waits for its answer, so a tick is only sent for a real box. */
+    private boolean onScreen(java.util.function.BooleanSupplier show) {
+        AtomicBoolean shown = new AtomicBoolean(false);
+        CountDownLatch answered = new CountDownLatch(1);
+        main.post(() -> {
+            shown.set(show.getAsBoolean());
+            answered.countDown();
+        });
+        awaitQuietly(answered, 5_000);
+        return shown.get();
     }
 
     private static void awaitQuietly(CountDownLatch latch, long millis) {

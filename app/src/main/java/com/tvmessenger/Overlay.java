@@ -27,17 +27,18 @@ final class Overlay {
 
     private Overlay() {}
 
-    static void show(Context c, String text, long millis, Runnable onHidden) {
+    /** False when the TV refused the window (no overlay permission): nothing is on screen then. */
+    static boolean show(Context c, String text, long millis, Runnable onHidden) {
         Context app = c.getApplicationContext();
         TextView t = textView(app, text, textSizeSp(text));
         t.setBackground(box(app));
         int pad = dp(app, 24);
         t.setPadding(pad, pad, pad, pad);
-        add(app, t, millis, onHidden);
+        return add(app, t, millis, onHidden);
     }
 
     /** The photo fitted into the box, the caption (if any) under it as typed. */
-    static void showPhoto(Context c, Bitmap photo, String caption, long millis, Runnable onHidden) {
+    static boolean showPhoto(Context c, Bitmap photo, String caption, long millis, Runnable onHidden) {
         Context app = c.getApplicationContext();
         LinearLayout column = new LinearLayout(app);
         column.setOrientation(LinearLayout.VERTICAL);
@@ -60,7 +61,7 @@ final class Overlay {
             lp.topMargin = dp(app, 16);
             column.addView(t, lp);
         }
-        add(app, column, millis, onHidden);
+        return add(app, column, millis, onHidden);
     }
 
     private static TextView textView(Context app, String text, float sizeSp) {
@@ -80,7 +81,7 @@ final class Overlay {
         return bg;
     }
 
-    private static void add(Context app, View v, long millis, Runnable onHidden) {
+    private static boolean add(Context app, View v, long millis, Runnable onHidden) {
         hide();
         int screenWidth = app.getResources().getDisplayMetrics().widthPixels;
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
@@ -97,11 +98,12 @@ final class Overlay {
         } catch (RuntimeException e) {
             // No overlay permission (granted with appops at install), or the window was refused: nothing to show.
             if (onHidden != null) onHidden.run();
-            return;
+            return false;
         }
         view = v;
         pendingHidden = onHidden;
         MAIN.postDelayed(HIDE, millis);
+        return true;
     }
 
     private static int dp(Context app, int value) {
