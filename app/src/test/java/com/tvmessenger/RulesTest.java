@@ -27,4 +27,12 @@ public class RulesTest {
     }
     @Test public void firstPollAnswersAtOnce() { assertEquals(0, Rules.pollTimeoutSec(false)); }
     @Test public void laterPollsWait() { assertEquals(50, Rules.pollTimeoutSec(true)); }
+    @Test public void photoWithoutCaptionTenSeconds() { assertEquals(10_000, Rules.photoMillis(null)); }
+    @Test public void photoWithShortCaptionTenSeconds() { assertEquals(10_000, Rules.photoMillis("Look at this")); }
+    @Test public void photoWithLongCaptionGetsReadingTime() { assertEquals(30_000, Rules.photoMillis("a".repeat(300))); }
+    @Test public void photoCapsAtOneMinute() { assertEquals(60_000, Rules.photoMillis("a".repeat(4096))); }
+    @Test public void smallPhotoNotScaled() { assertEquals(1, Rules.sampleSize(1280, 720, 1280, 720)); }
+    @Test public void photoTwiceScreenHalved() { assertEquals(2, Rules.sampleSize(2560, 1440, 1280, 720)); }
+    @Test public void hugePhotoScaledButNotBelowScreen() { assertEquals(4, Rules.sampleSize(6000, 4000, 1280, 720)); }
+    @Test public void tallPhotoStillFillsScreenHeight() { assertEquals(4, Rules.sampleSize(1600, 3000, 1280, 720)); }
 }

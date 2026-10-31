@@ -23,7 +23,9 @@ public class RouterTest {
     @Test public void startGetsHelp() { assertEquals(Router.Action.REPLY_HELP, route(OWNER, NOW_SEC, "\"text\":\"/start\"")); }
     @Test public void startWithPayloadGetsHelp() { assertEquals(Router.Action.REPLY_HELP, route(OWNER, NOW_SEC, "\"text\":\"/start abc\"")); }
     @Test public void otherSlashTextIsShown() { assertEquals(Router.Action.SHOW_TEXT, route(OWNER, NOW_SEC, "\"text\":\"/weather\"")); }
-    @Test public void ownerPhotoIsUnsupported() { assertEquals(Router.Action.REPLY_UNSUPPORTED, route(OWNER, NOW_SEC, "\"photo\":[{\"file_id\":\"x\"}]")); }
+    @Test public void ownerPhotoIsShown() { assertEquals(Router.Action.SHOW_PHOTO, route(OWNER, NOW_SEC, "\"photo\":[{\"file_id\":\"x\",\"width\":800}]")); }
+    @Test public void ownerVideoIsUnsupported() { assertEquals(Router.Action.REPLY_UNSUPPORTED, route(OWNER, NOW_SEC, "\"video\":{\"file_id\":\"v\"}")); }
+    @Test public void strangerPhotoIsIgnored() { assertEquals(Router.Action.IGNORE, route(STRANGER, NOW_SEC, "\"photo\":[{\"file_id\":\"x\",\"width\":800}]")); }
     @Test public void noneIsIgnored() {
         Incoming in = Updates.parse("{\"ok\":true,\"result\":[{\"update_id\":7,\"channel_post\":{}}]}").items.get(0);
         assertEquals(Router.Action.IGNORE, Router.decide(in, OWNER, NOW));

@@ -2,7 +2,7 @@ package com.tvmessenger;
 
 /** One Telegram update, reduced to what the TV needs. */
 final class Incoming {
-    enum Kind { TEXT, VOICE, START, OTHER, NONE }
+    enum Kind { TEXT, VOICE, PHOTO, START, OTHER, NONE }
 
     final long updateId;
     final long fromId; // 0 when the update has no sender
@@ -10,7 +10,7 @@ final class Incoming {
     final long messageId;
     final long dateSec;
     final Kind kind;
-    final String text;
+    final String text; // the message text, or a photo's caption (null when it has none)
     final String fileId;
     final int durationSec;
 

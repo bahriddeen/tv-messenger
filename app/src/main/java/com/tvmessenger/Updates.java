@@ -20,6 +20,7 @@ final class Updates {
         }
     }
 
+    private static final int MAX_PHOTO_WIDTH = 1280;
     private static final Batch EMPTY = new Batch(Collections.emptyList(), -1);
 
     private Updates() {}
@@ -45,6 +46,31 @@ final class Updates {
         }
     }
 
+    /**
+     * Telegram sends each photo in several sizes. Take the largest no wider than 1280 px: sharp on this TV,
+     * light on mobile data. If every size is wider, take the narrowest.
+     */
+    private static String photoSize(JSONArray sizes) {
+        String fit = null, narrowest = null;
+        int fitWidth = -1, narrowestWidth = Integer.MAX_VALUE;
+        for (int i = 0; i < sizes.length(); i++) {
+            JSONObject size = sizes.optJSONObject(i);
+            if (size == null) continue;
+            int w = size.optInt("width");
+            String id = size.optString("file_id", null);
+            if (id == null) continue;
+            if (w <= MAX_PHOTO_WIDTH && w > fitWidth) {
+                fit = id;
+                fitWidth = w;
+            }
+            if (w < narrowestWidth) {
+                narrowest = id;
+                narrowestWidth = w;
+            }
+        }
+        return fit != null ? fit : narrowest;
+    }
+
     private static Incoming message(long updateId, JSONObject m) {
         JSONObject from = m.optJSONObject("from");
         JSONObject chat = m.optJSONObject("chat");
@@ -56,6 +82,11 @@ final class Updates {
         if (voice != null) {
             return new Incoming(updateId, fromId, chatId, messageId, date, Incoming.Kind.VOICE,
                     null, voice.optString("file_id", null), voice.optInt("duration"));
+        }
+        JSONArray photo = m.optJSONArray("photo");
+        if (photo != null && photo.length() > 0) {
+            return new Incoming(updateId, fromId, chatId, messageId, date, Incoming.Kind.PHOTO,
+                    m.has("caption") ? m.optString("caption") : null, photoSize(photo), 0);
         }
         if (m.has("text")) {
             String text = m.optString("text");

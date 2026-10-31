@@ -2,7 +2,7 @@ package com.tvmessenger;
 
 /** What to do with one update. Strangers are ignored before anything else, so they never get a reply. */
 final class Router {
-    enum Action { IGNORE, SHOW_TEXT, PLAY_VOICE, REPLY_STALE, REPLY_UNSUPPORTED, REPLY_HELP }
+    enum Action { IGNORE, SHOW_TEXT, SHOW_PHOTO, PLAY_VOICE, REPLY_STALE, REPLY_UNSUPPORTED, REPLY_HELP }
 
     private Router() {}
 
@@ -13,6 +13,7 @@ final class Router {
             case START: return Action.REPLY_HELP;
             case TEXT: return Action.SHOW_TEXT;
             case VOICE: return Action.PLAY_VOICE;
+            case PHOTO: return Action.SHOW_PHOTO;
             default: return Action.REPLY_UNSUPPORTED;
         }
     }

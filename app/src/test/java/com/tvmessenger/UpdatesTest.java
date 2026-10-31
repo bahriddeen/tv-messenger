@@ -36,8 +36,25 @@ public class UpdatesTest {
         assertEquals(7, in.durationSec);
     }
 
-    @Test public void photoIsOther() {
-        Incoming in = Updates.parse(update(5, message(555, 1, "\"photo\":[{\"file_id\":\"x\"}]"))).items.get(0);
+    @Test public void photoPicksSizeNearest1280() {
+        String sizes = "\"photo\":[{\"file_id\":\"s\",\"width\":90,\"height\":51},"
+                + "{\"file_id\":\"m\",\"width\":800,\"height\":450},{\"file_id\":\"l\",\"width\":1280,\"height\":720},"
+                + "{\"file_id\":\"xl\",\"width\":2560,\"height\":1440}],\"caption\":\"Dinner\\n  soon\"";
+        Incoming in = Updates.parse(update(5, message(555, 1, sizes))).items.get(0);
+        assertEquals(Incoming.Kind.PHOTO, in.kind);
+        assertEquals("l", in.fileId);
+        assertEquals("Dinner\n  soon", in.text);
+    }
+
+    @Test public void photoOnlyLargerThan1280TakesSmallest() {
+        String sizes = "\"photo\":[{\"file_id\":\"a\",\"width\":1600,\"height\":900},{\"file_id\":\"b\",\"width\":3000,\"height\":2000}]";
+        Incoming in = Updates.parse(update(5, message(555, 1, sizes))).items.get(0);
+        assertEquals("a", in.fileId);
+        assertEquals(null, in.text);
+    }
+
+    @Test public void photoSentAsFileIsOther() {
+        Incoming in = Updates.parse(update(5, message(555, 1, "\"document\":{\"file_id\":\"d\",\"mime_type\":\"image/jpeg\"}"))).items.get(0);
         assertEquals(Incoming.Kind.OTHER, in.kind);
     }
 

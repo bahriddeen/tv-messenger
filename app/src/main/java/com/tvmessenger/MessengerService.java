@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ServiceInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
@@ -140,6 +142,9 @@ public final class MessengerService extends Service {
                 case SHOW_TEXT:
                     showText(in);
                     break;
+                case SHOW_PHOTO:
+                    showPhoto(in);
+                    break;
                 case PLAY_VOICE:
                     playVoice(in);
                     break;
@@ -168,6 +173,49 @@ public final class MessengerService extends Service {
         api.sendMessage(in.chatId, getString(R.string.reply_shown), in.messageId);
         prefs.edit().putLong(KEY_LAST, System.currentTimeMillis()).apply();
         awaitQuietly(hidden, millis + 10_000);
+    }
+
+    /** Download the photo, scale it down to screen size, then chime and show it with its caption. */
+    private void showPhoto(Incoming in) {
+        File file = new File(getCacheDir(), "photo-" + in.messageId + ".jpg");
+        Bitmap photo;
+        try {
+            api.download(api.getFilePath(in.fileId), file);
+            photo = decodeForScreen(file);
+        } catch (IOException e) {
+            Log.w(TAG, "photo download failed (" + e.getClass().getSimpleName() + ")");
+            photo = null;
+        } finally {
+            if (!file.delete()) file.deleteOnExit();
+        }
+        if (photo == null) return;
+        Chime.play();
+        CountDownLatch hidden = new CountDownLatch(1);
+        long millis = Rules.photoMillis(in.text);
+        String caption = in.text == null ? null : Rules.shorten(in.text);
+        Bitmap shown = photo;
+        main.post(() -> Overlay.showPhoto(this, shown, caption, millis, hidden::countDown));
+        api.sendMessage(in.chatId, getString(R.string.reply_shown), in.messageId);
+        prefs.edit().putLong(KEY_LAST, System.currentTimeMillis()).apply();
+        awaitQuietly(hidden, millis + 10_000);
+        // The box is gone: give the photo's memory back now rather than whenever the collector runs.
+        main.post(() -> {
+            Overlay.hide();
+            shown.recycle();
+        });
+    }
+
+    /** Decodes just large enough for the screen, so a big photo can't run a 1.5 GB TV out of memory. */
+    private Bitmap decodeForScreen(File file) {
+        BitmapFactory.Options bounds = new BitmapFactory.Options();
+        bounds.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(file.getAbsolutePath(), bounds);
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null;
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inSampleSize = Rules.sampleSize(bounds.outWidth, bounds.outHeight,
+                getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
+        opts.inPreferredConfig = Bitmap.Config.RGB_565; // half the memory of ARGB; a photo needs no transparency
+        return BitmapFactory.decodeFile(file.getAbsolutePath(), opts);
     }
 
     /** Download, chime, a notice on screen for the note's length + 2 s, then the voice with the show ducked. */

@@ -26,14 +26,19 @@ whatever is on screen.
 
 - Goals: reliable delivery while the TV is on; noticeable; readable from across the room; works with ADB
   switched off; starts by itself after every boot; light on a 1.5 GB TV and on mobile data.
-- Non-goals: replies from the TV, other senders, history, photos/video/stickers, a settings UI, Play Store.
+- Non-goals: replies from the TV, other senders, history, video/stickers/files, a settings UI, Play Store.
 - Anti-goals (a failure even if it works): stealing the remote (keys must keep going to the show); a message
   from an hour ago popping up when the TV is switched on; anyone but the owner being able to put text or
   sound on the TV; noticeable slowdown of the TV; becoming part of the cleanyourtv repo or its launcher.
 
 ## Decisions (owner's)
 
-- Text box in the **center** of the screen (changed from top-right after the first test on the TV).
+- **Photos** too (added after the first test): shown in the center box with the caption under it, as typed,
+  for **10 s**; a long caption adds reading time (12 characters/s), at most 60 s (the caption rule is my call).
+  Telegram's size nearest 1280 px wide is downloaded. Photos sent as files and videos stay unsupported.
+- Text box in the **center** of the screen (changed from top-right after the first test on the TV); the text
+  inside keeps the sender's own line breaks and spacing, aligned left.
+- A calm chime: the first beep was too sharp.
 - One-way only. Only the owner can send. Text minimum 15 s, scaling with length up to 1 minute.
   Show's volume lowered while the voice plays. The TV's own volume is respected: nothing is unmuted or
   raised, so on a muted TV a voice message is silent and only its on-screen notice is seen.

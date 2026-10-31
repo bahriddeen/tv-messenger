@@ -3,6 +3,7 @@ package com.tvmessenger;
 /** The numbers from the design: how long a text stays, how much of it fits, when a message is too old. */
 final class Rules {
     static final long MIN_MILLIS = 15_000;
+    static final long PHOTO_MILLIS = 10_000;
     static final long MAX_MILLIS = 60_000;
     static final long BASE_MILLIS = 5_000;
     static final int CHARS_PER_SECOND = 12;
@@ -19,6 +20,14 @@ final class Rules {
         long chars = text.codePointCount(0, text.length());
         long millis = BASE_MILLIS + chars * 1000 / CHARS_PER_SECOND;
         return Math.max(MIN_MILLIS, Math.min(MAX_MILLIS, millis));
+    }
+
+    /** 10 s for a photo; a long caption adds reading time at the text rate, 60 s at most. */
+    static long photoMillis(String caption) {
+        if (caption == null || caption.isEmpty()) return PHOTO_MILLIS;
+        long chars = caption.codePointCount(0, caption.length());
+        long reading = BASE_MILLIS + chars * 1000 / CHARS_PER_SECOND;
+        return Math.max(PHOTO_MILLIS, Math.min(MAX_MILLIS, reading));
     }
 
     /** The first 600 characters and "…", or the text itself when it fits. */
@@ -44,5 +53,16 @@ final class Rules {
      */
     static int pollTimeoutSec(boolean answeredSinceStart) {
         return answeredSinceStart ? POLL_TIMEOUT_SEC : 0;
+    }
+
+    /**
+     * The power-of-two shrink BitmapFactory should decode a photo with: as small as possible while the photo,
+     * fitted to the screen, still has at least one pixel per screen pixel.
+     */
+    static int sampleSize(int width, int height, int screenWidth, int screenHeight) {
+        double fit = Math.max(width / (double) screenWidth, height / (double) screenHeight);
+        int sample = 1;
+        while (sample * 2 <= fit) sample *= 2;
+        return sample;
     }
 }
