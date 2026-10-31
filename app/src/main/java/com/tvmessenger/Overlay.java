@@ -12,7 +12,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 
 /**
- * The text box in the top-right corner. It never takes focus or touches, so the remote keeps driving
+ * The text box in the middle of the screen. It never takes focus or touches, so the remote keeps driving
  * whatever is on screen. Main thread only.
  */
 final class Overlay {
@@ -33,6 +33,7 @@ final class Overlay {
         TextView t = new TextView(app);
         t.setText(text);
         t.setTextColor(Color.WHITE);
+        t.setGravity(Gravity.CENTER);
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp(text));
         int pad = (int) (24 * density);
         t.setPadding(pad, pad, pad, pad);
@@ -43,16 +44,14 @@ final class Overlay {
         t.setBackground(bg);
 
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                (int) (screenWidth * 0.45f),
+                (int) (screenWidth * 0.60f),
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.TOP | Gravity.END;
-        lp.x = (int) (32 * density);
-        lp.y = (int) (32 * density);
+        lp.gravity = Gravity.CENTER;
 
         try {
             wm.addView(t, lp);

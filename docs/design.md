@@ -33,6 +33,7 @@ whatever is on screen.
 
 ## Decisions (owner's)
 
+- Text box in the **center** of the screen (changed from top-right after the first test on the TV).
 - One-way only. Only the owner can send. Text minimum 15 s, scaling with length up to 1 minute.
   Show's volume lowered while the voice plays. The TV's own volume is respected: nothing is unmuted or
   raised, so on a muted TV a voice message is silent and only its on-screen notice is seen.
@@ -56,7 +57,7 @@ whatever is on screen.
   "Not shown: the TV was off when this arrived". Other message types get "Only text and voice messages work".
   `/start` from the owner gets a one-line help reply.
 - **Queue**: one item at a time, in order. A new message while one is showing waits its turn.
-- **Text box**: top-right corner, about 45% of the screen width, dark translucent rounded box, white text,
+- **Text box**: centered, about 60% of the screen width, text centered, dark translucent rounded box, white text,
   font size shrinks with length (large for a few words). Text longer than about 600 characters is cut with "…".
   Window flags: not focusable, not touchable, so the remote keeps controlling the show.
   Duration: `clamp(15 s, 5 s + characters / 12 per second, 60 s)`.
