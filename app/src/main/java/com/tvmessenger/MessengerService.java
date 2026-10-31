@@ -15,11 +15,13 @@ import android.os.Looper;
 import android.os.PowerManager;
 import android.util.Log;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Asks Telegram for the owner's messages and presents them one at a time. The poll thread only reads and
@@ -138,8 +140,20 @@ public final class MessengerService extends Service {
                 case SHOW_TEXT:
                     showText(in);
                     break;
+                case PLAY_VOICE:
+                    playVoice(in);
+                    break;
+                case REPLY_STALE:
+                    api.sendMessage(in.chatId, getString(R.string.reply_stale), in.messageId);
+                    break;
+                case REPLY_UNSUPPORTED:
+                    api.sendMessage(in.chatId, getString(R.string.reply_unsupported), in.messageId);
+                    break;
+                case REPLY_HELP:
+                    api.sendMessage(in.chatId, getString(R.string.reply_help), in.messageId);
+                    break;
                 default:
-                    Log.i(TAG, "not handled yet: " + action);
+                    break;
             }
         } finally {
             wakeLock.release();
@@ -154,6 +168,35 @@ public final class MessengerService extends Service {
         api.sendMessage(in.chatId, getString(R.string.reply_shown), in.messageId);
         prefs.edit().putLong(KEY_LAST, System.currentTimeMillis()).apply();
         awaitQuietly(hidden, millis + 10_000);
+    }
+
+    /** Download, chime, a notice on screen for the note's length + 2 s, then the voice with the show ducked. */
+    private void playVoice(Incoming in) {
+        File file = new File(getCacheDir(), "voice-" + in.messageId + ".ogg");
+        try {
+            api.download(api.getFilePath(in.fileId), file);
+        } catch (IOException e) {
+            Log.w(TAG, "voice download failed (" + e.getClass().getSimpleName() + ")");
+            if (!file.delete()) file.deleteOnExit();
+            return;
+        }
+        int seconds = Math.max(1, in.durationSec);
+        Chime.play();
+        CountDownLatch hidden = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(1);
+        AtomicBoolean played = new AtomicBoolean(false);
+        String notice = getString(R.string.voice_notice, seconds);
+        main.post(() -> Overlay.show(this, notice, (seconds + 2) * 1000L, hidden::countDown));
+        VoicePlayer.play(this, file, ok -> {
+            played.set(ok);
+            done.countDown();
+        });
+        awaitQuietly(done, (seconds + 30) * 1000L);
+        if (played.get()) {
+            api.sendMessage(in.chatId, getString(R.string.reply_played), in.messageId);
+            prefs.edit().putLong(KEY_LAST, System.currentTimeMillis()).apply();
+        }
+        awaitQuietly(hidden, 5_000);
     }
 
     private static void awaitQuietly(CountDownLatch latch, long millis) {

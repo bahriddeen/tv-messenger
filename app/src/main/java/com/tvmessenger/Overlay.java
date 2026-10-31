@@ -33,7 +33,7 @@ final class Overlay {
         TextView t = new TextView(app);
         t.setText(text);
         t.setTextColor(Color.WHITE);
-        t.setGravity(Gravity.CENTER);
+        t.setGravity(Gravity.START); // the text keeps the sender's own line breaks and spacing
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp(text));
         int pad = (int) (24 * density);
         t.setPadding(pad, pad, pad, pad);
