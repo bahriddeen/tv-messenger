@@ -1,1 +1,5 @@
 secrets.properties
+.gradle/
+build/
+local.properties
+.superpowers/

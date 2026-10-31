@@ -1,0 +1,46 @@
+plugins {
+    id 'com.android.application'
+}
+
+// The bot token and the owner's Telegram user id stay out of git: secrets.properties is gitignored.
+def secrets = new Properties()
+def secretsFile = rootProject.file('secrets.properties')
+if (!secretsFile.exists()) {
+    throw new GradleException("secrets.properties is missing: create it with bot_token=... and owner_id=...")
+}
+secretsFile.withInputStream { secrets.load(it) }
+['bot_token', 'owner_id'].each { key ->
+    if (!secrets.getProperty(key)?.trim()) {
+        throw new GradleException("secrets.properties has no ${key}")
+    }
+}
+
+android {
+    namespace 'com.tvmessenger'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.tvmessenger'
+        minSdk 26
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+        buildConfigField 'String', 'BOT_TOKEN', "\"${secrets.getProperty('bot_token').trim()}\""
+        buildConfigField 'long', 'OWNER_ID', "${secrets.getProperty('owner_id').trim()}L"
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    // Android's org.json is a stub in JVM tests; the real library stands in for it there.
+    testImplementation 'org.json:json:20240303'
+}
